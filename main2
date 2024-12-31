@@ -1,0 +1,111 @@
+import random
+
+class Animal:
+    def __init__(self, species, x, y, gender, move_distance):
+        self.species = species
+        self.x = x
+        self.y = y
+        self.gender = gender
+        self.move_distance = move_distance
+
+    def move(self):
+        dx = random.randint(-self.move_distance, self.move_distance)
+        dy = random.randint(-self.move_distance, self.move_distance)
+        self.x = max(0, min(500, self.x + dx))
+        self.y = max(0, min(500, self.y + dy))
+
+    def distance_to(self, other):
+        return ((self.x - other.x)**2 + (self.y - other.y)**2)**0.5
+
+# Hayvanları başlatma fonksiyonu
+def initialize_animals():
+    animals = []
+
+    # Koyunlar (15 erkek, 15 dişi)
+    for _ in range(15):
+        animals.append(Animal("Koyun", random.randint(0, 500), random.randint(0, 500), "Erkek", 2))
+        animals.append(Animal("Koyun", random.randint(0, 500), random.randint(0, 500), "Dişi", 2))
+
+    # İnekler (5 erkek, 5 dişi)
+    for _ in range(5):
+        animals.append(Animal("İnek", random.randint(0, 500), random.randint(0, 500), "Erkek", 2))
+        animals.append(Animal("İnek", random.randint(0, 500), random.randint(0, 500), "Dişi", 2))
+
+    # Tavuklar
+    for _ in range(10):
+        animals.append(Animal("Tavuk", random.randint(0, 500), random.randint(0, 500), None, 1))
+
+    # Horozlar
+    for _ in range(10):
+        animals.append(Animal("Horoz", random.randint(0, 500), random.randint(0, 500), None, 1))
+
+    # Kurtlar (5 erkek, 5 dişi)
+    for _ in range(5):
+        animals.append(Animal("Kurt", random.randint(0, 500), random.randint(0, 500), "Erkek", 3))
+        animals.append(Animal("Kurt", random.randint(0, 500), random.randint(0, 500), "Dişi", 3))
+
+    # Aslanlar (4 erkek, 4 dişi)
+    for _ in range(4):
+        animals.append(Animal("Aslan", random.randint(0, 500), random.randint(0, 500), "Erkek", 4))
+        animals.append(Animal("Aslan", random.randint(0, 500), random.randint(0, 500), "Dişi", 4))
+
+    # Avcı
+    animals.append(Animal("Avcı", random.randint(0, 500), random.randint(0, 500), None, 1))
+
+    return animals
+
+# Simülasyon döngüsü
+def simulate(animals, steps):
+    for _ in range(steps):
+        # Hareket ettir
+        for animal in animals:
+            animal.move()
+
+        # Etkileşimler (Avlanma ve çiftleşme)
+        new_animals = []
+        to_remove = []
+        
+        # Avlanma
+        for predator in animals:
+            if predator.species in ["Kurt", "Aslan", "Avcı"]:
+                for prey in animals:
+                    if predator != prey:
+                        dist = predator.distance_to(prey)
+
+                        # Avlanma kuralları
+                        if predator.species == "Kurt" and prey.species in ["Koyun", "Tavuk", "Horoz"] and dist <= 4:
+                            to_remove.append(prey)
+                        elif predator.species == "Aslan" and prey.species in ["Koyun", "İnek"] and dist <= 5:
+                            to_remove.append(prey)
+                        elif predator.species == "Avcı" and dist <= 8:
+                            to_remove.append(prey)
+        
+        # Çiftleşme
+        for animal1 in animals:
+            for animal2 in animals:
+                if animal1 != animal2 and animal1.species == animal2.species and animal1.gender != animal2.gender:
+                    if animal1.distance_to(animal2) <= 3:
+                        new_animals.append(Animal(animal1.species, random.randint(0, 500), random.randint(0, 500), random.choice(["Erkek", "Dişi"]), animal1.move_distance))
+
+        # Çıkarılacak hayvanları sil
+        for prey in to_remove:
+            if prey in animals:
+                animals.remove(prey)
+
+        # Yeni doğan hayvanları ekle
+        animals.extend(new_animals)
+
+    return animals
+
+# Ana program
+animals = initialize_animals()
+simulated_animals = simulate(animals, 1000)
+
+# Sonuçların yazdırılması
+result = {}
+for animal in simulated_animals:
+    result[animal.species] = result.get(animal.species, 0) + 1
+
+print("Simülasyon Sonuçları:")
+for species, count in result.items():
+    print(f"{species}: {count}")
